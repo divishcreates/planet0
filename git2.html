@@ -1,0 +1,2987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PLANET ZERO — Retro Edition</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+*{
+    box-sizing:border-box;
+    image-rendering:pixelated;
+}
+
+html,body{
+    margin:0;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:#05070d;
+    font-family:'Press Start 2P',monospace;
+    color:white;
+}
+
+button,input{
+    font-family:'Press Start 2P',monospace;
+}
+
+button{
+    cursor:pointer;
+}
+
+/* =========================
+   START SCREEN
+========================= */
+
+#startScreen{
+    position:fixed;
+    inset:0;
+    z-index:1000;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:
+        linear-gradient(rgba(5,8,18,.45),rgba(5,8,18,.8)),
+        repeating-linear-gradient(
+            0deg,
+            rgba(255,255,255,.025) 0px,
+            rgba(255,255,255,.025) 2px,
+            transparent 2px,
+            transparent 4px
+        ),
+        #10152c;
+}
+
+.startBox{
+    width:min(850px,90%);
+    text-align:center;
+    padding:55px 35px;
+    border:8px solid #fff;
+    background:#171d3b;
+    box-shadow:
+        14px 14px 0 #000,
+        inset 0 0 0 5px #6c63ff;
+    animation:startFloat 2s infinite ease-in-out;
+}
+
+@keyframes startFloat{
+    0%,100%{transform:translateY(0)}
+    50%{transform:translateY(-8px)}
+}
+
+.logo{
+    font-size:clamp(28px,6vw,70px);
+    color:#ffe14a;
+    text-shadow:
+        6px 6px 0 #e34c4c,
+        10px 10px 0 #000;
+    margin-bottom:30px;
+}
+
+.subtitle{
+    font-size:12px;
+    line-height:2;
+    color:#a9c8ff;
+    margin-bottom:35px;
+}
+
+#planetName{
+    width:min(500px,90%);
+    padding:18px;
+    background:#090d1d;
+    color:#fff;
+    border:5px solid #fff;
+    outline:none;
+    font-size:14px;
+    text-align:center;
+}
+
+#planetName:focus{
+    border-color:#ffe14a;
+}
+
+.pixelButton{
+    margin-top:25px;
+    padding:20px 28px;
+    border:5px solid #fff;
+    background:#ff4d6d;
+    color:#fff;
+    box-shadow:8px 8px 0 #000;
+    transition:.12s;
+    font-size:12px;
+}
+
+.pixelButton:hover{
+    transform:translate(4px,4px);
+    box-shadow:4px 4px 0 #000;
+    background:#ff6f86;
+}
+
+.pixelButton:active{
+    transform:translate(8px,8px);
+    box-shadow:none;
+}
+
+/* =========================
+   GAME
+========================= */
+
+#game{
+    display:none;
+    width:100%;
+    height:100%;
+    position:relative;
+    overflow:hidden;
+    background:#76c9ff;
+}
+
+/* sky */
+
+#sky{
+    position:absolute;
+    inset:0;
+    background:
+        linear-gradient(
+            #48a9ff 0%,
+            #82d9ff 55%,
+            #c9f4ff 100%
+        );
+    transition:background 2s;
+}
+
+#game.night #sky{
+    background:
+        linear-gradient(
+            #080d2d,
+            #18265b 60%,
+            #384b77
+        );
+}
+
+/* stars */
+
+.star{
+    position:absolute;
+    width:4px;
+    height:4px;
+    background:white;
+    opacity:0;
+    animation:twinkle 2s infinite alternate;
+}
+
+#game.night .star{
+    opacity:.8;
+}
+
+@keyframes twinkle{
+    from{opacity:.2}
+    to{opacity:1}
+}
+
+/* clouds */
+
+.cloud{
+    position:absolute;
+    width:100px;
+    height:32px;
+    background:white;
+    box-shadow:
+        20px -20px 0 white,
+        50px -28px 0 white,
+        80px -12px 0 white;
+    opacity:.9;
+    animation:cloudMove linear infinite;
+}
+
+@keyframes cloudMove{
+    from{transform:translateX(-180px)}
+    to{transform:translateX(calc(100vw + 200px))}
+}
+
+/* =========================
+   HUD
+========================= */
+
+#hud{
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    padding:14px;
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    z-index:20;
+    pointer-events:none;
+}
+
+.hudBox{
+    background:#11162b;
+    border:4px solid #fff;
+    padding:12px;
+    box-shadow:6px 6px 0 #000;
+    font-size:9px;
+    line-height:2;
+}
+
+#planetTitle{
+    color:#ffe14a;
+}
+
+#stats{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+}
+
+.stat{
+    color:#fff;
+}
+
+.stat b{
+    color:#7dff82;
+}
+
+/* =========================
+   PLANET
+========================= */
+
+#planetView{
+    position:absolute;
+    inset:0;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+.planet{
+    position:relative;
+    width:min(48vw,430px);
+    height:min(48vw,430px);
+    min-width:250px;
+    min-height:250px;
+    border-radius:50%;
+    cursor:pointer;
+
+    background:
+        radial-gradient(circle at 32% 25%,#7eff8d 0 7%,transparent 8%),
+        radial-gradient(circle at 70% 30%,#55d96b 0 12%,transparent 13%),
+        radial-gradient(circle at 35% 70%,#3fc45c 0 15%,transparent 16%),
+        radial-gradient(circle at 75% 70%,#64e576 0 10%,transparent 11%),
+        #48b957;
+
+    border:12px solid #1b6b37;
+
+    box-shadow:
+        inset -35px -30px 0 rgba(0,0,0,.2),
+        inset 25px 20px 0 rgba(255,255,255,.1),
+        0 0 70px rgba(72,255,130,.4),
+        0 0 0 12px #10182d,
+        0 0 0 18px #fff;
+
+    animation:planetFloat 4s infinite ease-in-out;
+    transition:transform .8s;
+}
+
+@keyframes planetFloat{
+    0%,100%{transform:translateY(0) rotate(-1deg)}
+    50%{transform:translateY(-12px) rotate(1deg)}
+}
+
+.planet:hover{
+    transform:scale(1.04);
+}
+
+.planet::after{
+    content:"";
+    position:absolute;
+    inset:-35px;
+    border-radius:50%;
+    border:3px dashed rgba(255,255,255,.2);
+    animation:orbit 15s linear infinite;
+}
+
+@keyframes orbit{
+    to{transform:rotate(360deg)}
+}
+
+/* buildings on planet */
+
+.miniBuilding{
+    position:absolute;
+    width:34px;
+    height:42px;
+    background:#ff6b5e;
+    border:4px solid #54252a;
+    animation:buildingBounce 2s infinite ease-in-out;
+}
+
+.miniBuilding::before{
+    content:"";
+    position:absolute;
+    top:-17px;
+    left:-5px;
+    width:36px;
+    height:20px;
+    background:#ffe14a;
+    border:4px solid #54252a;
+    transform:skewX(-20deg);
+}
+
+.miniBuilding:nth-child(1){left:25%;top:35%}
+.miniBuilding:nth-child(2){left:58%;top:27%;animation-delay:.4s}
+.miniBuilding:nth-child(3){left:43%;top:62%;animation-delay:.8s}
+.miniBuilding:nth-child(4){left:68%;top:58%;animation-delay:1.2s}
+
+@keyframes buildingBounce{
+    0%,100%{transform:translateY(0)}
+    50%{transform:translateY(-5px)}
+}
+
+/* =========================
+   SECTORS
+========================= */
+
+#sectorPanel{
+    position:absolute;
+    bottom:15px;
+    left:50%;
+    transform:translateX(-50%);
+    width:min(1000px,95%);
+    z-index:30;
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:10px;
+}
+
+.sector{
+    border:4px solid #fff;
+    background:#171c35;
+    padding:13px 5px;
+    color:#fff;
+    box-shadow:6px 6px 0 #000;
+    transition:.15s;
+    text-align:center;
+    font-size:8px;
+}
+
+.sector:hover{
+    transform:translateY(-8px);
+    background:#29315b;
+}
+
+.sector .emoji{
+    display:block;
+    font-size:28px;
+    margin-bottom:10px;
+    animation:emojiBounce 1.5s infinite;
+}
+
+@keyframes emojiBounce{
+    0%,100%{transform:translateY(0)}
+    50%{transform:translateY(-5px)}
+}
+
+/* =========================
+   WORLD VIEW
+========================= */
+
+#worldView{
+    display:none;
+    position:absolute;
+    inset:0;
+    z-index:100;
+    overflow:hidden;
+    animation:worldIn .7s ease-out;
+}
+
+@keyframes worldIn{
+    from{
+        opacity:0;
+        transform:scale(.65);
+    }
+    to{
+        opacity:1;
+        transform:scale(1);
+    }
+}
+
+.worldSky{
+    position:absolute;
+    inset:0;
+    background:
+        linear-gradient(
+            #64c8ff 0 52%,
+            #5ecb68 52% 100%
+        );
+}
+
+.worldGround{
+    position:absolute;
+    bottom:0;
+    left:0;
+    width:100%;
+    height:48%;
+    background:
+        repeating-linear-gradient(
+            90deg,
+            #4db85b 0 50px,
+            #45a951 50px 100px
+        );
+}
+
+.worldGround::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:
+        linear-gradient(45deg,
+            rgba(255,255,255,.04) 25%,
+            transparent 25%,
+            transparent 75%,
+            rgba(0,0,0,.04) 75%);
+    background-size:50px 50px;
+}
+
+/* roads */
+
+.road{
+    position:absolute;
+    background:#696969;
+    border:6px solid #404040;
+    box-shadow:inset 0 0 0 4px #858585;
+}
+
+.road.horizontal{
+    left:0;
+    right:0;
+    top:54%;
+    height:95px;
+}
+
+.road.vertical{
+    top:35%;
+    bottom:0;
+    left:46%;
+    width:100px;
+}
+
+.roadLine{
+    position:absolute;
+    width:35px;
+    height:8px;
+    background:#ffe14a;
+}
+
+/* world header */
+
+.worldHeader{
+    position:absolute;
+    top:15px;
+    left:15px;
+    right:15px;
+    display:flex;
+    justify-content:space-between;
+    z-index:20;
+}
+
+.worldTitle{
+    padding:15px;
+    background:#11162b;
+    border:4px solid #fff;
+    box-shadow:6px 6px 0 #000;
+    font-size:13px;
+}
+
+.backBtn{
+    padding:15px;
+    background:#ff4d6d;
+    color:white;
+    border:4px solid white;
+    box-shadow:6px 6px 0 #000;
+}
+
+.backBtn:hover{
+    transform:translate(3px,3px);
+    box-shadow:3px 3px 0 #000;
+}
+
+/* =========================
+   MAP OBJECTS
+========================= */
+
+.mapObject{
+    position:absolute;
+    z-index:10;
+    width:115px;
+    height:110px;
+    background:#8b5a3c;
+    border:6px solid #352018;
+    box-shadow:
+        8px 8px 0 rgba(0,0,0,.35),
+        inset 0 0 0 5px rgba(255,255,255,.08);
+    color:white;
+    transition:.15s;
+}
+
+.mapObject:hover{
+    transform:translateY(-10px) scale(1.05);
+    filter:brightness(1.2);
+}
+
+.mapObject .objIcon{
+    font-size:40px;
+    display:block;
+    margin-top:8px;
+}
+
+.mapObject .objName{
+    font-size:7px;
+    display:block;
+    margin-top:8px;
+    line-height:1.5;
+}
+
+/* windows */
+
+.mapObject::after{
+    content:"";
+    position:absolute;
+    width:16px;
+    height:18px;
+    background:#75d9ff;
+    border:3px solid #352018;
+    top:30px;
+    right:15px;
+    box-shadow:-30px 0 0 #75d9ff;
+}
+
+/* grass decoration */
+
+.tree{
+    position:absolute;
+    width:28px;
+    height:50px;
+    background:#754326;
+    z-index:4;
+}
+
+.tree::before{
+    content:"";
+    position:absolute;
+    width:55px;
+    height:55px;
+    background:#36a94c;
+    border:5px solid #22652f;
+    border-radius:30%;
+    top:-35px;
+    left:-14px;
+}
+
+/* =========================
+   POPUP
+========================= */
+
+#actionBox{
+    display:none;
+    position:absolute;
+    left:50%;
+    bottom:25px;
+    transform:translateX(-50%);
+    width:min(600px,90%);
+    background:#151a31;
+    border:6px solid #fff;
+    box-shadow:10px 10px 0 #000;
+    padding:20px;
+    z-index:200;
+    animation:popup .2s ease-out;
+}
+
+@keyframes popup{
+    from{
+        transform:translate(-50%,20px) scale(.9);
+        opacity:0;
+    }
+    to{
+        transform:translate(-50%,0) scale(1);
+        opacity:1;
+    }
+}
+
+#actionTitle{
+    color:#ffe14a;
+    font-size:13px;
+}
+
+#actionDesc{
+    color:#b8c3ef;
+    font-size:9px;
+    line-height:2;
+    margin:15px 0;
+}
+
+#actionButton{
+    padding:15px;
+    background:#4bdc74;
+    border:4px solid white;
+    box-shadow:5px 5px 0 #000;
+    color:#06150b;
+    font-size:9px;
+}
+
+#actionButton:hover{
+    transform:translateY(-3px);
+}
+
+/* =========================
+   LOG
+========================= */
+
+#log{
+    position:absolute;
+    left:15px;
+    bottom:15px;
+    width:300px;
+    max-height:100px;
+    overflow:hidden;
+    background:rgba(10,15,30,.9);
+    border:4px solid white;
+    padding:10px;
+    z-index:40;
+    font-size:7px;
+    line-height:1.8;
+}
+
+.logLine{
+    animation:logAppear .3s;
+}
+
+@keyframes logAppear{
+    from{
+        transform:translateX(-15px);
+        opacity:0;
+    }
+    to{
+        transform:translateX(0);
+        opacity:1;
+    }
+}
+
+/* =========================
+   PARTICLES
+========================= */
+
+.particle{
+    position:fixed;
+    width:8px;
+    height:8px;
+    pointer-events:none;
+    z-index:999;
+    animation:particleFly .7s forwards;
+}
+
+@keyframes particleFly{
+    to{
+        transform:
+            translate(
+                var(--x),
+                var(--y)
+            )
+            rotate(360deg);
+        opacity:0;
+    }
+}
+
+/* =========================
+   FLOATING ACTION TEXT
+========================= */
+
+.floatText{
+    position:fixed;
+    z-index:1000;
+    font-family:'Press Start 2P',monospace;
+    pointer-events:none;
+    text-shadow:3px 3px 0 #000;
+    white-space:nowrap;
+    transform:translate(-50%,-50%);
+    animation:floatUp 1.3s ease-out forwards;
+}
+
+@keyframes floatUp{
+    0%{
+        transform:translate(-50%,-50%) translateY(0) scale(.8);
+        opacity:0;
+    }
+    15%{
+        transform:translate(-50%,-50%) translateY(-10px) scale(1.05);
+        opacity:1;
+    }
+    100%{
+        transform:translate(-50%,-50%) translateY(-90px) scale(1);
+        opacity:0;
+    }
+}
+
+.mapObject.clicked{
+    animation:objectPunch .35s ease !important;
+}
+
+@keyframes objectPunch{
+    0%{transform:scale(1)}
+    35%{transform:scale(1.18) rotate(-3deg)}
+    60%{transform:scale(.94) rotate(2deg)}
+    100%{transform:scale(1) rotate(0)}
+}
+
+/* =========================
+   CENTER ACTION FX
+========================= */
+
+#actionFX{
+    position:fixed;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    z-index:2000;
+    display:none;
+    flex-direction:column;
+    align-items:center;
+    pointer-events:none;
+    text-align:center;
+}
+
+#actionFX.show{
+    display:flex;
+}
+
+#actionFX .fxIcon{
+    font-size:min(26vw,130px);
+    line-height:1;
+    filter:drop-shadow(6px 6px 0 rgba(0,0,0,.5));
+}
+
+#actionFX .fxCaption{
+    margin-top:16px;
+    background:#11162b;
+    border:4px solid #fff;
+    box-shadow:6px 6px 0 #000;
+    padding:12px 18px;
+    font-size:11px;
+    color:#ffe14a;
+    white-space:nowrap;
+    animation:fxCaptionIn .25s ease-out;
+}
+
+@keyframes fxCaptionIn{
+    from{opacity:0;transform:translateY(10px)}
+    to{opacity:1;transform:translateY(0)}
+}
+
+.fxIcon.chomp{animation:chompAnim .4s steps(1) 2}
+@keyframes chompAnim{
+    0%,100%{transform:scale(1,1)}
+    25%{transform:scale(.72,1.18) rotate(-4deg)}
+    50%{transform:scale(1.12,.82) rotate(0)}
+    75%{transform:scale(.85,1.08) rotate(4deg)}
+}
+
+.fxIcon.build{animation:buildAnim .5s ease-in-out 2}
+@keyframes buildAnim{
+    0%,100%{transform:translateY(0) rotate(0)}
+    25%{transform:translateY(-14px) rotate(-10deg)}
+    50%{transform:translateY(0) rotate(0)}
+    75%{transform:translateY(-8px) rotate(10deg)}
+}
+
+.fxIcon.cash{animation:cashAnim .9s ease-in-out}
+@keyframes cashAnim{
+    0%{transform:rotate(0) scale(1)}
+    50%{transform:rotate(180deg) scale(1.3)}
+    100%{transform:rotate(360deg) scale(1)}
+}
+
+.fxIcon.heal{animation:healAnim .8s ease-in-out}
+@keyframes healAnim{
+    0%,100%{transform:scale(1)}
+    50%{transform:scale(1.3)}
+}
+
+.fxIcon.harvest{animation:harvestAnim .7s ease-in-out 2}
+@keyframes harvestAnim{
+    0%,100%{transform:rotate(-10deg)}
+    50%{transform:rotate(10deg)}
+}
+
+.fxIcon.engine{animation:engineAnim .5s ease-in-out 2}
+@keyframes engineAnim{
+    0%,100%{transform:translateX(0) rotate(0)}
+    25%{transform:translateX(-10px) rotate(-5deg)}
+    75%{transform:translateX(10px) rotate(5deg)}
+}
+
+.fxIcon.feed{animation:feedAnim .6s ease-in-out 2}
+@keyframes feedAnim{
+    0%,100%{transform:translateY(0) scale(1)}
+    50%{transform:translateY(-18px) scale(1.12)}
+}
+
+.fxIcon.splash{animation:splashAnim .8s ease-out}
+@keyframes splashAnim{
+    0%{transform:translateY(-25px) scale(.5);opacity:.4}
+    55%{transform:translateY(0) scale(1.25);opacity:1}
+    100%{transform:translateY(0) scale(1)}
+}
+
+.fxIcon.dig{animation:digAnim .45s ease-in-out 2}
+@keyframes digAnim{
+    0%,100%{transform:translateY(0) rotate(0)}
+    25%{transform:translateY(10px) rotate(-18deg)}
+    50%{transform:translateY(0) rotate(0)}
+    75%{transform:translateY(10px) rotate(18deg)}
+}
+
+.fxIcon.sparkle{animation:sparkleAnim .9s ease-in-out}
+@keyframes sparkleAnim{
+    0%{transform:rotate(0) scale(1)}
+    50%{transform:rotate(180deg) scale(1.35)}
+    100%{transform:rotate(360deg) scale(1)}
+}
+
+.fxIcon.train{animation:trainAnim .5s ease-in-out 2}
+@keyframes trainAnim{
+    0%,100%{transform:translateX(0)}
+    25%{transform:translateX(-22px)}
+    75%{transform:translateX(22px)}
+}
+
+.fxIcon.smash{animation:smashAnim .5s ease-in-out}
+@keyframes smashAnim{
+    0%,100%{transform:scale(1) rotate(0)}
+    30%{transform:scale(1.35) rotate(-12deg)}
+    60%{transform:scale(.8) rotate(10deg)}
+}
+
+.fxIcon.bubble{animation:bubbleAnim .7s ease-in-out 2}
+@keyframes bubbleAnim{
+    0%,100%{transform:translateY(0) scale(1)}
+    33%{transform:translateY(-12px) scale(1.12)}
+    66%{transform:translateY(6px) scale(.94)}
+}
+
+.fxIcon.robot{animation:robotAnim .6s steps(2) 2}
+@keyframes robotAnim{
+    0%,100%{transform:translateX(0) rotate(0)}
+    20%{transform:translateX(-7px) rotate(-6deg)}
+    40%{transform:translateX(7px) rotate(6deg)}
+    60%{transform:translateX(-5px) rotate(-3deg)}
+    80%{transform:translateX(5px) rotate(3deg)}
+}
+
+.fxIcon.pulse{animation:pulseFxAnim .7s ease-in-out 2}
+@keyframes pulseFxAnim{
+    0%,100%{transform:scale(1) rotate(0)}
+    50%{transform:scale(1.3) rotate(12deg)}
+}
+
+.fxIcon.zoom{animation:zoomAnim .7s ease-out}
+@keyframes zoomAnim{
+    0%{transform:scale(.4)}
+    55%{transform:scale(1.45)}
+    100%{transform:scale(1)}
+}
+
+.fxIcon.scan{animation:scanAnim 1s linear}
+@keyframes scanAnim{
+    to{transform:rotate(360deg)}
+}
+
+.fxIcon.launch{animation:launchAnim 1s ease-in forwards}
+@keyframes launchAnim{
+    0%{transform:translateY(0) scale(1);opacity:1}
+    55%{transform:translateY(-50px) scale(1.15);opacity:1}
+    100%{transform:translateY(-320px) scale(.35);opacity:0}
+}
+
+.fxIcon.shield{animation:shieldAnim .8s ease-in-out 2}
+@keyframes shieldAnim{
+    0%,100%{transform:scale(1);filter:drop-shadow(0 0 0 #6cf)}
+    50%{transform:scale(1.25);filter:drop-shadow(0 0 22px #6cf)}
+}
+
+.fxIcon.clash{animation:clashAnim .4s ease-in-out 3}
+@keyframes clashAnim{
+    0%,100%{transform:rotate(0)}
+    25%{transform:rotate(-22deg)}
+    75%{transform:rotate(22deg)}
+}
+
+/* =========================
+   ASTEROID EVENT
+========================= */
+
+#asteroidEvent{
+    position:fixed;
+    inset:0;
+    z-index:3000;
+    display:none;
+    flex-direction:column;
+    align-items:center;
+    padding-top:40px;
+    overflow:hidden;
+}
+
+#asteroidEvent.show{
+    display:flex;
+}
+
+#asteroidEvent::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:rgba(255,0,0,.15);
+    animation:alarmFlash .5s infinite alternate;
+    pointer-events:none;
+}
+
+@keyframes alarmFlash{
+    from{opacity:.2}
+    to{opacity:.6}
+}
+
+#asteroidWarning{
+    position:relative;
+    background:#3a0808;
+    border:4px solid #ff4d4d;
+    box-shadow:6px 6px 0 #000;
+    color:#ff6b6b;
+    padding:12px 20px;
+    font-size:12px;
+    z-index:2;
+    animation:warnBlink .5s infinite alternate;
+}
+
+@keyframes warnBlink{
+    from{opacity:1}
+    to{opacity:.45}
+}
+
+#asteroidSky{
+    position:relative;
+    width:100%;
+    flex:1;
+    z-index:2;
+}
+
+#shieldRing{
+    position:absolute;
+    top:48%;
+    left:50%;
+    width:10px;
+    height:10px;
+    border:6px solid #6cf;
+    border-radius:50%;
+    transform:translate(-50%,-50%);
+    opacity:0;
+}
+
+#asteroidEvent.saved #shieldRing{
+    animation:shieldExpand .7s ease-out forwards;
+}
+
+@keyframes shieldExpand{
+    0%{width:10px;height:10px;opacity:1}
+    100%{width:340px;height:340px;opacity:0}
+}
+
+#asteroid{
+    position:absolute;
+    top:-10%;
+    right:10%;
+    font-size:min(18vw,70px);
+    filter:drop-shadow(4px 4px 0 rgba(0,0,0,.5));
+}
+
+#asteroid.falling{
+    animation:asteroidFall 5s linear forwards;
+}
+
+@keyframes asteroidFall{
+    0%{top:-12%;right:8%;transform:rotate(0deg) scale(.8)}
+    100%{top:46%;right:46%;transform:rotate(540deg) scale(1.5)}
+}
+
+#asteroidEvent.saved #asteroid{
+    animation:asteroidBlast .5s ease-out forwards !important;
+}
+
+@keyframes asteroidBlast{
+    0%{opacity:1;transform:scale(1) rotate(0)}
+    100%{opacity:0;transform:scale(2.2) rotate(120deg)}
+}
+
+#asteroidTask{
+    position:relative;
+    z-index:2;
+    text-align:center;
+    margin-top:6px;
+}
+
+#asteroidPrompt{
+    font-size:13px;
+    color:#ffe14a;
+    margin-bottom:16px;
+    text-shadow:3px 3px 0 #000;
+}
+
+#asteroidTimer{
+    font-size:38px;
+    color:#fff;
+    text-shadow:4px 4px 0 #000;
+    animation:timerPulse 1s infinite;
+    margin-bottom:16px;
+}
+
+@keyframes timerPulse{
+    0%,100%{transform:scale(1)}
+    50%{transform:scale(1.25)}
+}
+
+#asteroidInput{
+    padding:14px;
+    font-size:14px;
+    text-align:center;
+    background:#090d1d;
+    color:#fff;
+    border:4px solid #fff;
+    outline:none;
+    text-transform:uppercase;
+}
+
+#asteroidInput:focus{
+    border-color:#ffe14a;
+}
+
+#asteroidResult{
+    position:relative;
+    z-index:2;
+    margin:18px 0 40px;
+    padding:14px 20px;
+    font-size:10px;
+    min-height:14px;
+}
+
+#asteroidResult.success{
+    color:#7dff82;
+    background:#0c2b13;
+    border:4px solid #7dff82;
+    box-shadow:6px 6px 0 #000;
+}
+
+#asteroidResult.fail{
+    color:#ff6b6b;
+    background:#2b0c0c;
+    border:4px solid #ff6b6b;
+    box-shadow:6px 6px 0 #000;
+}
+
+#asteroidEvent.impact{
+    animation:impactFlash .4s;
+}
+
+@keyframes impactFlash{
+    0%{background:rgba(255,0,0,.85)}
+    100%{background:rgba(0,0,0,0)}
+}
+
+#game.shake{
+    animation:gameShake .5s;
+}
+
+@keyframes gameShake{
+    0%,100%{transform:translate(0,0)}
+    20%{transform:translate(-10px,6px)}
+    40%{transform:translate(10px,-6px)}
+    60%{transform:translate(-8px,-8px)}
+    80%{transform:translate(8px,8px)}
+}
+
+/* =========================
+   SCREEN TRANSITION
+========================= */
+
+#transition{
+    position:fixed;
+    inset:0;
+    background:#05070d;
+    z-index:9999;
+    pointer-events:none;
+    opacity:0;
+}
+
+#transition.active{
+    animation:transitionAnim .8s;
+}
+
+@keyframes transitionAnim{
+    0%{opacity:0}
+    35%{opacity:1}
+    65%{opacity:1}
+    100%{opacity:0}
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media(max-width:800px){
+
+    #sectorPanel{
+        grid-template-columns:repeat(5,1fr);
+        gap:4px;
+    }
+
+    .sector{
+        font-size:6px;
+        padding:8px 2px;
+    }
+
+    .sector .emoji{
+        font-size:20px;
+    }
+
+    .hudBox{
+        font-size:6px;
+        padding:7px;
+    }
+
+    .mapObject{
+        width:90px;
+        height:85px;
+    }
+
+    .mapObject .objIcon{
+        font-size:30px;
+    }
+
+    #log{
+        width:220px;
+        font-size:6px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<!-- START -->
+<div id="startScreen">
+
+    <div class="startBox">
+
+        <div class="logo">PLANET ZERO</div>
+
+        <div class="subtitle">
+            BUILD IT.<br>
+            EXPLORE IT.<br>
+            BREAK IT.<br>
+            FIX IT.<br><br>
+            YOUR WORLD. YOUR RULES.
+        </div>
+
+        <input
+            id="planetName"
+            maxlength="16"
+            placeholder="ENTER PLANET NAME"
+        >
+
+        <br>
+
+        <button
+            class="pixelButton"
+            onclick="startGame()"
+        >
+            ▶ START ADVENTURE
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- GAME -->
+<div id="game">
+
+    <div id="sky"></div>
+
+    <!-- stars -->
+    <div class="star" style="left:10%;top:15%;"></div>
+    <div class="star" style="left:20%;top:25%;animation-delay:.4s"></div>
+    <div class="star" style="left:35%;top:12%;animation-delay:.8s"></div>
+    <div class="star" style="left:52%;top:20%;animation-delay:1s"></div>
+    <div class="star" style="left:70%;top:10%;animation-delay:.3s"></div>
+    <div class="star" style="left:88%;top:25%;animation-delay:1.2s"></div>
+
+    <!-- clouds -->
+    <div class="cloud" style="top:16%;animation-duration:35s;"></div>
+    <div class="cloud" style="top:30%;animation-duration:48s;animation-delay:-15s;"></div>
+
+    <!-- HUD -->
+    <div id="hud">
+
+        <div class="hudBox">
+            <div id="planetTitle">PLANET: NOVA</div>
+            <div>YEAR <span id="year">1</span></div>
+        </div>
+
+        <div class="hudBox">
+            <div id="stats">
+
+                <div class="stat">
+                    👥 <b id="population">100</b>
+                </div>
+
+                <div class="stat">
+                    ❤️ <b id="happiness">70</b>
+                </div>
+
+                <div class="stat">
+                    🌳 <b id="environment">80</b>
+                </div>
+
+                <div class="stat">
+                    🧪 <b id="science">20</b>
+                </div>
+
+                <div class="stat">
+                    💰 <b id="credits">100</b>
+                </div>
+
+                <div class="stat">
+                    🍞 <b id="food">100</b>
+                </div>
+
+                <div class="stat">
+                    ⛏️ <b id="minerals">50</b>
+                </div>
+
+                <div class="stat">
+                    ⚡ <b id="energy">100</b>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- PLANET -->
+    <div id="planetView">
+
+        <div
+            class="planet"
+            onclick="planetClick(event)"
+        >
+
+            <div class="miniBuilding"></div>
+            <div class="miniBuilding"></div>
+            <div class="miniBuilding"></div>
+            <div class="miniBuilding"></div>
+
+        </div>
+
+    </div>
+
+
+    <!-- SECTORS -->
+    <div id="sectorPanel">
+
+        <button
+            class="sector"
+            onclick="openWorld('city')"
+        >
+            <span class="emoji">🏙️</span>
+            CITY
+        </button>
+
+        <button
+            class="sector"
+            onclick="openWorld('farm')"
+        >
+            <span class="emoji">🌾</span>
+            FARM
+        </button>
+
+        <button
+            class="sector"
+            onclick="openWorld('mine')"
+        >
+            <span class="emoji">⛏️</span>
+            MINE
+        </button>
+
+        <button
+            class="sector"
+            onclick="openWorld('lab')"
+        >
+            <span class="emoji">🧪</span>
+            LAB
+        </button>
+
+        <button
+            class="sector"
+            onclick="openWorld('defense')"
+        >
+            <span class="emoji">🛡️</span>
+            BASE
+        </button>
+
+    </div>
+
+
+    <!-- LOG -->
+    <div id="log"></div>
+
+
+    <!-- WORLD -->
+    <div id="worldView">
+
+        <div class="worldSky"></div>
+        <div class="worldGround"></div>
+
+        <div class="worldHeader">
+
+            <div
+                class="worldTitle"
+                id="worldTitle"
+            >
+                CITY
+            </div>
+
+            <button
+                class="backBtn"
+                onclick="returnPlanet()"
+            >
+                ◀ PLANET
+            </button>
+
+        </div>
+
+        <!-- roads -->
+        <div class="road horizontal"></div>
+        <div class="road vertical"></div>
+
+        <!-- trees -->
+        <div class="tree" style="left:10%;bottom:20%"></div>
+        <div class="tree" style="left:25%;bottom:30%"></div>
+        <div class="tree" style="left:75%;bottom:25%"></div>
+        <div class="tree" style="left:88%;bottom:35%"></div>
+
+        <!-- objects injected here -->
+        <div id="mapObjects"></div>
+
+    </div>
+
+
+    <!-- ACTION -->
+    <div id="actionBox">
+
+        <div id="actionTitle">
+            BUILDING
+        </div>
+
+        <div id="actionDesc">
+            Description
+        </div>
+
+        <button
+            id="actionButton"
+            onclick="performAction()"
+        >
+            DO ACTION
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- ASTEROID EVENT -->
+<div id="asteroidEvent">
+
+    <div id="asteroidWarning">⚠️ ASTEROID INCOMING ⚠️</div>
+
+    <div id="asteroidSky">
+        <div id="shieldRing"></div>
+        <div id="asteroid">☄️</div>
+    </div>
+
+    <div id="asteroidTask">
+        <div id="asteroidPrompt">PROMPT</div>
+        <div id="asteroidTimer">5</div>
+        <input
+            id="asteroidInput"
+            autocomplete="off"
+            placeholder="TYPE HERE"
+            style="display:none"
+        >
+    </div>
+
+    <div id="asteroidResult"></div>
+
+</div>
+
+
+<!-- CENTER ACTION FX -->
+<div id="actionFX">
+    <div class="fxIcon"></div>
+    <div class="fxCaption"></div>
+</div>
+
+
+<div id="transition"></div>
+
+
+<script>
+
+/* =========================================================
+   GAME STATE
+========================================================= */
+
+const state = {
+
+    name:"Nova",
+
+    year:1,
+
+    population:100,
+    happiness:70,
+    environment:80,
+    science:20,
+    credits:100,
+
+    food:100,
+    minerals:50,
+    energy:100,
+
+    day:0
+
+};
+
+
+/* =========================================================
+   AUDIO ENGINE
+   ORIGINAL RETRO CHIPTUNE SOUNDS
+========================================================= */
+
+let audioCtx=null;
+
+function initAudio(){
+
+    if(!audioCtx){
+
+        audioCtx=
+            new(window.AudioContext ||
+            window.webkitAudioContext)();
+
+    }
+
+    if(audioCtx.state==="suspended"){
+        audioCtx.resume();
+    }
+}
+
+
+/* basic beep */
+
+function beep(
+    frequency=440,
+    duration=.1,
+    type="square",
+    volume=.05
+){
+
+    initAudio();
+
+    const osc=
+        audioCtx.createOscillator();
+
+    const gain=
+        audioCtx.createGain();
+
+    osc.type=type;
+
+    osc.frequency.value=frequency;
+
+    gain.gain.setValueAtTime(
+        volume,
+        audioCtx.currentTime
+    );
+
+    gain.gain.exponentialRampToValueAtTime(
+        .001,
+        audioCtx.currentTime+duration
+    );
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.start();
+
+    osc.stop(
+        audioCtx.currentTime+duration
+    );
+}
+
+
+/* jump */
+
+function soundJump(){
+
+    beep(420,.07,"square",.07);
+
+    setTimeout(
+        ()=>beep(650,.09,"square",.07),
+        60
+    );
+
+}
+
+
+/* coin */
+
+function soundCoin(){
+
+    beep(880,.06,"square",.07);
+
+    setTimeout(
+        ()=>beep(1320,.09,"square",.06),
+        70
+    );
+
+}
+
+
+/* click */
+
+function soundClick(){
+
+    beep(240,.05,"square",.04);
+
+}
+
+
+/* build */
+
+function soundBuild(){
+
+    beep(180,.08,"square",.05);
+
+    setTimeout(
+        ()=>beep(280,.08,"square",.05),
+        80
+    );
+
+    setTimeout(
+        ()=>beep(420,.12,"square",.05),
+        160
+    );
+
+}
+
+
+/* success */
+
+function soundSuccess(){
+
+    beep(523,.08,"square",.06);
+
+    setTimeout(
+        ()=>beep(659,.08,"square",.06),
+        80
+    );
+
+    setTimeout(
+        ()=>beep(784,.15,"square",.06),
+        160
+    );
+
+}
+
+
+/* error */
+
+function soundError(){
+
+    beep(180,.15,"sawtooth",.06);
+
+    setTimeout(
+        ()=>beep(120,.2,"sawtooth",.04),
+        130
+    );
+
+}
+
+
+/* world enter */
+
+function soundEnter(){
+
+    const notes=[
+        261,
+        329,
+        392,
+        523,
+        659
+    ];
+
+    notes.forEach(
+        (n,i)=>{
+            setTimeout(
+                ()=>beep(n,.12,"square",.055),
+                i*90
+            );
+        }
+    );
+
+}
+
+
+/* =========================================================
+   ACTION SOUND EFFECTS (one per animType)
+========================================================= */
+
+const sfxPatterns={
+    chomp:[[180,.06,"square",.09,0],[140,.08,"square",.09,80],[100,.1,"square",.08,160]],
+    build:[[180,.08,"square",.05,0],[280,.08,"square",.05,90],[420,.12,"square",.05,180]],
+    cash:[[880,.06,"square",.07,0],[1320,.09,"square",.06,80]],
+    heal:[[523,.1,"sine",.05,0],[659,.12,"sine",.05,110],[784,.16,"sine",.05,220]],
+    harvest:[[400,.05,"square",.05,0],[500,.05,"square",.05,70],[600,.07,"square",.05,140]],
+    engine:[[80,.15,"sawtooth",.06,0],[70,.15,"sawtooth",.06,120],[90,.15,"sawtooth",.06,240]],
+    feed:[[150,.2,"sawtooth",.07,0],[110,.25,"sawtooth",.06,160]],
+    splash:[[600,.05,"sine",.05,0],[500,.05,"sine",.05,60],[400,.08,"sine",.05,120]],
+    dig:[[100,.1,"square",.08,0],[90,.1,"square",.08,130],[80,.12,"square",.08,260]],
+    sparkle:[[900,.05,"square",.05,0],[1100,.05,"square",.05,70],[1400,.08,"square",.05,140]],
+    train:[[150,.08,"square",.06,0],[150,.08,"square",.06,160],[150,.08,"square",.06,320],[300,.15,"square",.06,480]],
+    smash:[[80,.15,"sawtooth",.08,0],[60,.2,"sawtooth",.07,110]],
+    bubble:[[500,.04,"sine",.04,0],[600,.04,"sine",.04,70],[700,.04,"sine",.04,140],[800,.06,"sine",.04,210]],
+    robot:[[300,.04,"square",.05,0],[500,.04,"square",.05,70],[300,.04,"square",.05,140],[700,.08,"square",.05,210]],
+    pulse:[[440,.1,"sine",.05,0],[440,.1,"sine",.05,160],[440,.15,"sine",.05,320]],
+    zoom:[[200,.15,"sine",.05,0],[600,.2,"sine",.06,110]],
+    scan:[[700,.04,"square",.04,0],[700,.04,"square",.04,130],[700,.04,"square",.04,260],[900,.1,"square",.05,390]],
+    launch:[[150,.1,"sawtooth",.06,0],[300,.1,"sawtooth",.06,90],[500,.1,"sawtooth",.06,180],[800,.2,"sawtooth",.06,270]],
+    shield:[[400,.1,"square",.05,0],[500,.1,"square",.05,110],[600,.15,"square",.05,220]],
+    clash:[[300,.05,"sawtooth",.07,0],[200,.08,"sawtooth",.06,90]]
+};
+
+function playSFX(type){
+
+    initAudio();
+
+    const pattern=sfxPatterns[type];
+
+    if(!pattern){
+        soundSuccess();
+        return;
+    }
+
+    pattern.forEach(
+        ([freq,dur,waveType,vol,delay])=>{
+            setTimeout(
+                ()=>beep(freq,dur,waveType,vol),
+                delay
+            );
+        }
+    );
+
+}
+
+
+/* alarm siren */
+
+function soundAlarm(){
+
+    const seq=[620,300,620,300,620,300];
+
+    seq.forEach(
+        (freq,i)=>{
+            setTimeout(
+                ()=>beep(freq,.15,"sawtooth",.06),
+                i*170
+            );
+        }
+    );
+
+}
+
+
+/* =========================================================
+   START
+========================================================= */
+
+function startGame(){
+
+    initAudio();
+
+    const input=
+        document.getElementById("planetName");
+
+    state.name=
+        input.value.trim() || "Nova";
+
+    document.getElementById("planetTitle")
+        .textContent=
+        "PLANET: "+state.name.toUpperCase();
+
+    document.getElementById("startScreen")
+        .style.display="none";
+
+    document.getElementById("game")
+        .style.display="block";
+
+    soundSuccess();
+
+    log(
+        "🌎 Welcome to "+state.name+"!"
+    );
+
+    setTimeout(
+        ()=>{
+            log(
+                "CLICK A SECTOR TO EXPLORE YOUR PLANET."
+            );
+        },
+        900
+    );
+
+}
+
+
+/* =========================================================
+   STATS
+========================================================= */
+
+function updateStats(){
+
+    document.getElementById("year")
+        .textContent=state.year;
+
+    document.getElementById("population")
+        .textContent=state.population;
+
+    document.getElementById("happiness")
+        .textContent=state.happiness;
+
+    document.getElementById("environment")
+        .textContent=state.environment;
+
+    document.getElementById("science")
+        .textContent=state.science;
+
+    document.getElementById("credits")
+        .textContent=state.credits;
+
+    document.getElementById("food")
+        .textContent=state.food;
+
+    document.getElementById("minerals")
+        .textContent=state.minerals;
+
+    document.getElementById("energy")
+        .textContent=state.energy;
+
+}
+
+
+/* =========================================================
+   LOG
+========================================================= */
+
+function log(message){
+
+    const box=
+        document.getElementById("log");
+
+    const line=
+        document.createElement("div");
+
+    line.className="logLine";
+
+    line.textContent=
+        "› "+message;
+
+    box.prepend(line);
+
+    while(box.children.length>5){
+        box.removeChild(box.lastChild);
+    }
+
+}
+
+
+/* =========================================================
+   PARTICLES
+========================================================= */
+
+function particles(x,y,count=15){
+
+    for(let i=0;i<count;i++){
+
+        const p=
+            document.createElement("div");
+
+        p.className="particle";
+
+        p.style.left=x+"px";
+        p.style.top=y+"px";
+
+        p.style.background=
+            [
+                "#ffe14a",
+                "#ff4d6d",
+                "#55e878",
+                "#62c8ff",
+                "#ffffff"
+            ][
+                Math.floor(Math.random()*5)
+            ];
+
+        p.style.setProperty(
+            "--x",
+            ((Math.random()-.5)*180)+"px"
+        );
+
+        p.style.setProperty(
+            "--y",
+            ((Math.random()-.5)*180)+"px"
+        );
+
+        document.body.appendChild(p);
+
+        setTimeout(
+            ()=>p.remove(),
+            800
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   PLANET CLICK
+========================================================= */
+
+function planetClick(e){
+
+    soundJump();
+
+    particles(
+        e.clientX,
+        e.clientY,
+        20
+    );
+
+    log(
+        "🌎 "+state.name+" is alive!"
+    );
+
+}
+
+
+/* =========================================================
+   WORLD DATA
+========================================================= */
+
+const worlds={
+
+city:{
+
+    title:"🏙️ PIXEL CITY",
+
+    objects:[
+
+        {
+            name:"HOME BLOCK",
+            icon:"🏠",
+            x:"12%",
+            y:"28%",
+            desc:"A small residential district where citizens live.",
+            action:"BUILD HOME",
+            flavor:"🏠 Laying new foundations...",
+            animType:"build",
+            effect(){
+                state.population+=10;
+                state.happiness+=2;
+            }
+        },
+
+        {
+            name:"BURGER SHOP",
+            icon:"🍔",
+            x:"63%",
+            y:"28%",
+            desc:"A classic pixel restaurant. Citizens LOVE this place.",
+            action:"EAT BURGER",
+            flavor:"😋 Eating a delicious pixel burger...",
+            animType:"chomp",
+            effect(){
+                state.happiness+=8;
+                state.credits-=5;
+            }
+        },
+
+        {
+            name:"HOSPITAL",
+            icon:"🏥",
+            x:"28%",
+            y:"58%",
+            desc:"Keeps the citizens healthy and happy.",
+            action:"HELP CITIZENS",
+            flavor:"🏥 Treating citizens with care...",
+            animType:"heal",
+            effect(){
+                state.population+=2;
+                state.happiness+=3;
+            }
+        },
+
+        {
+            name:"BANK",
+            icon:"🏦",
+            x:"67%",
+            y:"60%",
+            desc:"The financial center of the city.",
+            action:"COLLECT TAX",
+            flavor:"💰 Counting shiny credits...",
+            animType:"cash",
+            effect(){
+                state.credits+=25;
+            }
+        }
+
+    ]
+
+},
+
+farm:{
+
+    title:"🌾 PIXEL FARMS",
+
+    objects:[
+
+        {
+            name:"WHEAT FIELD",
+            icon:"🌾",
+            x:"12%",
+            y:"30%",
+            desc:"Rows of crops stretching across the land.",
+            action:"HARVEST",
+            flavor:"🌾 Harvesting golden wheat...",
+            animType:"harvest",
+            effect(){
+                state.food+=30;
+                state.environment+=2;
+            }
+        },
+
+        {
+            name:"TRACTOR",
+            icon:"🚜",
+            x:"60%",
+            y:"27%",
+            desc:"Your trusty pixel tractor.",
+            action:"FARM",
+            flavor:"🚜 Plowing the fields...",
+            animType:"engine",
+            effect(){
+                state.food+=40;
+                state.environment-=2;
+            }
+        },
+
+        {
+            name:"ANIMAL FARM",
+            icon:"🐄",
+            x:"27%",
+            y:"58%",
+            desc:"Cows, chickens and other friendly animals.",
+            action:"FEED ANIMALS",
+            flavor:"🐄 Feeding the animals...",
+            animType:"feed",
+            effect(){
+                state.food+=25;
+                state.happiness+=5;
+            }
+        },
+
+        {
+            name:"WATER STATION",
+            icon:"💧",
+            x:"68%",
+            y:"58%",
+            desc:"Provides water to the entire farm.",
+            action:"PUMP WATER",
+            flavor:"💧 Pumping fresh water...",
+            animType:"splash",
+            effect(){
+                state.food+=20;
+                state.environment+=3;
+            }
+        }
+
+    ]
+
+},
+
+mine:{
+
+    title:"⛏️ PIXEL MINE",
+
+    objects:[
+
+        {
+            name:"MINING SHAFT",
+            icon:"⛏️",
+            x:"12%",
+            y:"28%",
+            desc:"A deep underground mining operation.",
+            action:"MINE",
+            flavor:"⛏️ Digging deep underground...",
+            animType:"dig",
+            effect(){
+                state.minerals+=30;
+                state.environment-=3;
+            }
+        },
+
+        {
+            name:"CRYSTAL CAVE",
+            icon:"💎",
+            x:"62%",
+            y:"27%",
+            desc:"Rare glowing crystals are hidden here.",
+            action:"COLLECT CRYSTALS",
+            flavor:"💎 Collecting glowing crystals...",
+            animType:"sparkle",
+            effect(){
+                state.minerals+=50;
+                state.science+=5;
+            }
+        },
+
+        {
+            name:"MINING TRAIN",
+            icon:"🚂",
+            x:"28%",
+            y:"58%",
+            desc:"Carries resources back to the city.",
+            action:"SEND TRAIN",
+            flavor:"🚂 Sending resources to the city...",
+            animType:"train",
+            effect(){
+                state.credits+=20;
+            }
+        },
+
+        {
+            name:"ROCK DEPOSIT",
+            icon:"🪨",
+            x:"68%",
+            y:"60%",
+            desc:"A giant untouched mineral deposit.",
+            action:"BREAK ROCK",
+            flavor:"🪨 Breaking through solid rock...",
+            animType:"smash",
+            effect(){
+                state.minerals+=20;
+            }
+        }
+
+    ]
+
+},
+
+lab:{
+
+    title:"🧪 PIXEL RESEARCH LAB",
+
+    objects:[
+
+        {
+            name:"CHEMISTRY LAB",
+            icon:"🧪",
+            x:"12%",
+            y:"28%",
+            desc:"Experiments are performed here.",
+            action:"EXPERIMENT",
+            flavor:"🧪 Mixing bubbling chemicals...",
+            animType:"bubble",
+            effect(){
+                state.science+=20;
+                state.energy-=5;
+            }
+        },
+
+        {
+            name:"ROBOTICS LAB",
+            icon:"🤖",
+            x:"62%",
+            y:"27%",
+            desc:"Build futuristic robots.",
+            action:"BUILD ROBOT",
+            flavor:"🤖 Assembling a new robot...",
+            animType:"robot",
+            effect(){
+                state.science+=30;
+                state.credits-=10;
+            }
+        },
+
+        {
+            name:"BIOLOGY LAB",
+            icon:"🧬",
+            x:"27%",
+            y:"58%",
+            desc:"Scientists study life on the planet.",
+            action:"RESEARCH",
+            flavor:"🧬 Studying planetary life...",
+            animType:"pulse",
+            effect(){
+                state.science+=25;
+                state.happiness+=2;
+            }
+        },
+
+        {
+            name:"OBSERVATORY",
+            icon:"🔭",
+            x:"68%",
+            y:"58%",
+            desc:"Look into the unknown.",
+            action:"OBSERVE SPACE",
+            flavor:"🔭 Gazing into deep space...",
+            animType:"zoom",
+            effect(){
+                state.science+=40;
+            }
+        }
+
+    ]
+
+},
+
+defense:{
+
+    title:"🛡️ PIXEL DEFENSE BASE",
+
+    objects:[
+
+        {
+            name:"RADAR",
+            icon:"📡",
+            x:"12%",
+            y:"28%",
+            desc:"Detects threats from far away.",
+            action:"SCAN",
+            flavor:"📡 Scanning the horizon...",
+            animType:"scan",
+            effect(){
+                state.science+=5;
+            }
+        },
+
+        {
+            name:"LAUNCH PAD",
+            icon:"🚀",
+            x:"62%",
+            y:"27%",
+            desc:"Launch vehicles into space.",
+            action:"LAUNCH",
+            flavor:"🚀 Launching into orbit...",
+            animType:"launch",
+            effect(){
+                state.science+=10;
+                state.credits-=15;
+            }
+        },
+
+        {
+            name:"SHIELD",
+            icon:"🛡️",
+            x:"27%",
+            y:"58%",
+            desc:"Protects your civilization.",
+            action:"ACTIVATE",
+            flavor:"🛡️ Raising planetary shields...",
+            animType:"shield",
+            effect(){
+                state.energy-=10;
+                state.happiness+=2;
+            }
+        },
+
+        {
+            name:"TRAINING",
+            icon:"⚔️",
+            x:"68%",
+            y:"58%",
+            desc:"Train planetary defenders.",
+            action:"TRAIN",
+            flavor:"⚔️ Training brave defenders...",
+            animType:"clash",
+            effect(){
+                state.happiness-=2;
+                state.science+=5;
+            }
+        }
+
+    ]
+
+}
+
+};
+
+
+/* =========================================================
+   OPEN WORLD
+========================================================= */
+
+let currentWorld=null;
+let selectedObject=null;
+let selectedPos=null;
+
+/* stat display config used for floating +/- feedback */
+const statMeta={
+    population:{icon:"👥",color:"#7dff82"},
+    happiness:{icon:"❤️",color:"#ff6b8a"},
+    environment:{icon:"🌳",color:"#7dff82"},
+    science:{icon:"🧪",color:"#8ecbff"},
+    credits:{icon:"💰",color:"#ffe14a"},
+    food:{icon:"🍞",color:"#ffbd6b"},
+    minerals:{icon:"⛏️",color:"#c9c9c9"},
+    energy:{icon:"⚡",color:"#ffe14a"}
+};
+
+/* =========================================================
+   CENTER-SCREEN ACTION FX (icon + caption + sound)
+========================================================= */
+
+function showActionFX(obj){
+
+    const fx=
+        document.getElementById("actionFX");
+
+    const iconEl=
+        fx.querySelector(".fxIcon");
+
+    const capEl=
+        fx.querySelector(".fxCaption");
+
+    /* restart css animation even if same type clicked twice */
+    iconEl.className="fxIcon";
+    void iconEl.offsetWidth;
+
+    iconEl.textContent=obj.icon;
+    iconEl.classList.add(obj.animType || "pulse");
+
+    capEl.textContent=
+        obj.flavor || obj.action;
+
+    fx.classList.add("show");
+
+    playSFX(obj.animType);
+
+    clearTimeout(fx._hideTimer);
+
+    fx._hideTimer=setTimeout(
+        ()=>{
+            fx.classList.remove("show");
+        },
+        obj.animType==="launch" ? 1050 : 850
+    );
+
+}
+
+
+function floatText(x,y,text,color="#fff",delay=0){
+
+    setTimeout(()=>{
+
+        const el=
+            document.createElement("div");
+
+        el.className="floatText";
+
+        el.textContent=text;
+
+        el.style.left=x+"px";
+        el.style.top=y+"px";
+        el.style.color=color;
+        el.style.fontSize=
+            text.length>18?"9px":"13px";
+
+        document.body.appendChild(el);
+
+        setTimeout(
+            ()=>el.remove(),
+            1300
+        );
+
+    },delay);
+
+}
+
+function openWorld(type){
+
+    initAudio();
+
+    soundEnter();
+
+    currentWorld=type;
+
+    const transition=
+        document.getElementById("transition");
+
+    transition.classList.remove("active");
+
+    void transition.offsetWidth;
+
+    transition.classList.add("active");
+
+    particles(
+        window.innerWidth/2,
+        window.innerHeight/2,
+        30
+    );
+
+    setTimeout(()=>{
+
+        document.getElementById("planetView")
+            .style.display="none";
+
+        document.getElementById("sectorPanel")
+            .style.display="none";
+
+        document.getElementById("worldView")
+            .style.display="block";
+
+        document.getElementById("worldTitle")
+            .textContent=
+            worlds[type].title;
+
+        createWorldObjects(
+            worlds[type].objects
+        );
+
+        log(
+            "ENTERED "+worlds[type].title
+        );
+
+        setTimeout(
+            maybeSpawnAsteroid,
+            1300
+        );
+
+    },450);
+
+}
+
+
+/* =========================================================
+   CREATE OBJECTS
+========================================================= */
+
+function createWorldObjects(objects){
+
+    const container=
+        document.getElementById("mapObjects");
+
+    container.innerHTML="";
+
+    objects.forEach((obj,index)=>{
+
+        const button=
+            document.createElement("button");
+
+        button.className="mapObject";
+
+        button.style.left=obj.x;
+        button.style.top=obj.y;
+
+        button.style.animation=
+            `buildingBounce ${2+index*.25}s infinite ease-in-out`;
+
+        button.innerHTML=`
+
+            <span class="objIcon">
+                ${obj.icon}
+            </span>
+
+            <span class="objName">
+                ${obj.name}
+            </span>
+
+        `;
+
+        button.onclick=
+            (event)=>{
+
+                soundClick();
+
+                selectedObject=obj;
+
+                selectedPos={
+                    x:event.clientX,
+                    y:event.clientY
+                };
+
+                button.classList.remove("clicked");
+                void button.offsetWidth;
+                button.classList.add("clicked");
+
+                document.getElementById(
+                    "actionTitle"
+                ).textContent=
+                    obj.icon+" "+obj.name;
+
+                document.getElementById(
+                    "actionDesc"
+                ).textContent=
+                    obj.desc;
+
+                document.getElementById(
+                    "actionButton"
+                ).textContent=
+                    "▶ "+obj.action;
+
+                document.getElementById(
+                    "actionBox"
+                ).style.display="block";
+
+                particles(
+                    event.clientX,
+                    event.clientY,
+                    10
+                );
+
+            };
+
+        container.appendChild(button);
+
+    });
+
+}
+
+
+/* =========================================================
+   ACTION
+========================================================= */
+
+function performAction(){
+
+    if(!selectedObject) return;
+
+    const before={...state};
+
+    selectedObject.effect();
+
+    clampStats();
+
+    updateStats();
+
+    const box=
+        document.getElementById("actionBox");
+
+    box.style.display="none";
+
+    const px=
+        selectedPos ? selectedPos.x : window.innerWidth/2;
+
+    const py=
+        selectedPos ? selectedPos.y : window.innerHeight/2;
+
+    particles(px,py,25);
+
+    /* big funny animated icon + caption + sound, center screen */
+    showActionFX(selectedObject);
+
+    /* small floating +/- indicators for every stat that changed,
+       anchored under the center FX so they read together */
+    let stagger=250;
+
+    const centerX=window.innerWidth/2;
+    const centerY=window.innerHeight/2+110;
+
+    Object.keys(statMeta).forEach(key=>{
+
+        const diff=state[key]-before[key];
+
+        if(diff===0) return;
+
+        const meta=statMeta[key];
+
+        const sign=diff>0?"+":"";
+
+        stagger+=140;
+
+        floatText(
+            centerX+(Math.random()*100-50),
+            centerY,
+            meta.icon+" "+sign+diff,
+            diff>0?"#7dff82":"#ff6b6b",
+            stagger
+        );
+
+    });
+
+    log(
+        "✓ "+(selectedObject.flavor || selectedObject.action)+
+        " ("+selectedObject.action+" COMPLETE!)"
+    );
+
+    selectedObject=null;
+    selectedPos=null;
+
+}
+
+
+/* =========================================================
+   ASTEROID EVENT (quick-time attack / defense)
+========================================================= */
+
+const asteroidWords=[
+    "SHIELD","EVADE","BLOCK","DODGE","DEFEND","BRACE"
+];
+
+const asteroidKeys=
+    "QWERASDFZXCV".split("");
+
+let asteroidActive=false;
+let asteroidResolved=false;
+let asteroidMode=null;
+let asteroidTarget=null;
+let asteroidTimeLeft=5;
+let asteroidInterval=null;
+let asteroidEverShown=false;
+
+function maybeSpawnAsteroid(){
+
+    if(asteroidActive) return;
+
+    /* guarantee it on the very first sector you open, so it's
+       impossible to miss — after that it's a random ~55% chance
+       each time you open a sector */
+    if(asteroidEverShown && Math.random()>0.55) return;
+
+    asteroidEverShown=true;
+
+    spawnAsteroid();
+
+}
+
+function spawnAsteroid(){
+
+    asteroidActive=true;
+    asteroidResolved=false;
+    asteroidTimeLeft=5;
+
+    asteroidMode=
+        Math.random()<0.5 ? "press" : "type";
+
+    asteroidTarget=
+        asteroidMode==="press" ?
+            asteroidKeys[
+                Math.floor(Math.random()*asteroidKeys.length)
+            ] :
+            asteroidWords[
+                Math.floor(Math.random()*asteroidWords.length)
+            ];
+
+    const overlay=
+        document.getElementById("asteroidEvent");
+
+    const promptEl=
+        document.getElementById("asteroidPrompt");
+
+    const timerEl=
+        document.getElementById("asteroidTimer");
+
+    const inputEl=
+        document.getElementById("asteroidInput");
+
+    const asteroidEl=
+        document.getElementById("asteroid");
+
+    const resultEl=
+        document.getElementById("asteroidResult");
+
+    resultEl.textContent="";
+    resultEl.className="";
+
+    promptEl.textContent=
+        asteroidMode==="press" ?
+            "⌨ PRESS [ "+asteroidTarget+" ] !" :
+            "⌨ TYPE \""+asteroidTarget+"\" !";
+
+    timerEl.textContent=asteroidTimeLeft;
+
+    inputEl.style.display=
+        asteroidMode==="type" ? "block" : "none";
+
+    inputEl.value="";
+
+    asteroidEl.className="";
+    void asteroidEl.offsetWidth;
+    asteroidEl.classList.add("falling");
+
+    overlay.classList.remove("show","impact","saved");
+    void overlay.offsetWidth;
+    overlay.classList.add("show");
+
+    initAudio();
+    soundAlarm();
+
+    log("☄️ ASTEROID INCOMING! Respond fast!");
+
+    if(asteroidMode==="type"){
+        setTimeout(()=>inputEl.focus(),60);
+    }
+
+    clearInterval(asteroidInterval);
+
+    asteroidInterval=setInterval(
+        ()=>{
+
+            asteroidTimeLeft--;
+
+            timerEl.textContent=
+                Math.max(asteroidTimeLeft,0);
+
+            if(asteroidTimeLeft<=0){
+
+                clearInterval(asteroidInterval);
+
+                if(!asteroidResolved){
+                    asteroidFail();
+                }
+
+            }
+
+        },
+        1000
+    );
+
+}
+
+function asteroidKeyHandler(e){
+
+    if(!asteroidActive || asteroidResolved) return;
+    if(asteroidMode!=="press") return;
+
+    const pressed=
+        e.key.length===1 ? e.key.toUpperCase() : e.key;
+
+    if(pressed===asteroidTarget){
+        asteroidSuccess();
+    }
+
+}
+
+document.addEventListener(
+    "keydown",
+    asteroidKeyHandler
+);
+
+function asteroidInputHandler(){
+
+    if(!asteroidActive || asteroidResolved) return;
+    if(asteroidMode!=="type") return;
+
+    const val=
+        document.getElementById("asteroidInput")
+            .value.trim().toUpperCase();
+
+    if(val===asteroidTarget){
+        asteroidSuccess();
+    }
+
+}
+
+document.getElementById("asteroidInput")
+    .addEventListener(
+        "input",
+        asteroidInputHandler
+    );
+
+function asteroidSuccess(){
+
+    asteroidResolved=true;
+
+    clearInterval(asteroidInterval);
+
+    const overlay=
+        document.getElementById("asteroidEvent");
+
+    const resultEl=
+        document.getElementById("asteroidResult");
+
+    overlay.classList.add("saved");
+
+    resultEl.textContent=
+        "🛡️ SHIELD HELD! PLANET SAVED!";
+
+    resultEl.className="success";
+
+    playSFX("shield");
+
+    particles(
+        window.innerWidth/2,
+        window.innerHeight/2,
+        30
+    );
+
+    state.happiness+=5;
+    state.science+=5;
+
+    clampStats();
+    updateStats();
+
+    log("🛡️ Asteroid deflected! +5 happiness, +5 science.");
+
+    setTimeout(
+        ()=>{
+            overlay.classList.remove("show","saved");
+            asteroidActive=false;
+        },
+        1600
+    );
+
+}
+
+function asteroidFail(){
+
+    asteroidResolved=true;
+
+    const overlay=
+        document.getElementById("asteroidEvent");
+
+    const resultEl=
+        document.getElementById("asteroidResult");
+
+    overlay.classList.add("impact");
+
+    resultEl.textContent=
+        "💥 IMPACT! THE PLANET TOOK DAMAGE!";
+
+    resultEl.className="fail";
+
+    playSFX("smash");
+    soundError();
+
+    const gameEl=
+        document.getElementById("game");
+
+    gameEl.classList.add("shake");
+
+    setTimeout(
+        ()=>gameEl.classList.remove("shake"),
+        500
+    );
+
+    state.population-=8;
+    state.happiness-=10;
+    state.environment-=8;
+
+    clampStats();
+    updateStats();
+
+    log("💥 Asteroid strike! Population, happiness and environment damaged.");
+
+    setTimeout(
+        ()=>{
+            overlay.classList.remove("show","impact");
+            asteroidActive=false;
+        },
+        1600
+    );
+
+}
+
+
+/* =========================================================
+   STATS LIMIT
+========================================================= */
+
+function clampStats(){
+
+    state.population=
+        Math.max(0,state.population);
+
+    state.happiness=
+        Math.max(0,Math.min(100,state.happiness));
+
+    state.environment=
+        Math.max(0,Math.min(100,state.environment));
+
+    state.science=
+        Math.max(0,state.science);
+
+    state.credits=
+        Math.max(0,state.credits);
+
+    state.food=
+        Math.max(0,state.food);
+
+    state.minerals=
+        Math.max(0,state.minerals);
+
+    state.energy=
+        Math.max(0,state.energy);
+
+}
+
+
+/* =========================================================
+   RETURN TO PLANET
+========================================================= */
+
+function returnPlanet(){
+
+    soundClick();
+
+    document.getElementById(
+        "actionBox"
+    ).style.display="none";
+
+    document.getElementById(
+        "worldView"
+    ).style.display="none";
+
+    document.getElementById(
+        "planetView"
+    ).style.display="flex";
+
+    document.getElementById(
+        "sectorPanel"
+    ).style.display="grid";
+
+    log(
+        "🌎 Returned to planetary view."
+    );
+
+}
+
+
+/* =========================================================
+   DAY / NIGHT
+========================================================= */
+
+setInterval(()=>{
+
+    state.day++;
+
+    if(state.day%2===0){
+
+        document.getElementById("game")
+            .classList.add("night");
+
+    }else{
+
+        document.getElementById("game")
+            .classList.remove("night");
+
+    }
+
+    if(state.day%4===0){
+
+        state.year++;
+
+        updateStats();
+
+        log(
+            "🌞 A new planetary season begins."
+        );
+
+    }
+
+},15000);
+
+
+/* =========================================================
+   KEYBOARD
+========================================================= */
+
+document.addEventListener(
+    "keydown",
+    e=>{
+
+        if(e.key==="Escape"){
+
+            document.getElementById(
+                "actionBox"
+            ).style.display="none";
+
+            selectedObject=null;
+
+        }
+
+        if(e.key==="Enter"){
+
+            const start=
+                document.getElementById(
+                    "startScreen"
+                );
+
+            if(
+                start.style.display!=="none"
+            ){
+
+                startGame();
+
+            }
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   STARTING PLANET ANIMATION
+========================================================= */
+
+setInterval(()=>{
+
+    if(
+        document.getElementById("game")
+            .style.display==="block"
+    ){
+
+        const planet=
+            document.querySelector(".planet");
+
+        if(planet){
+
+            planet.style.filter=
+                `brightness(${1+
+                Math.random()*.12})`;
+
+        }
+
+    }
+
+},700);
+
+
+/* =========================================================
+   FIRST UPDATE
+========================================================= */
+
+updateStats();
+
+</script>
+
+</body>
+</html>
